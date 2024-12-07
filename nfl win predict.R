@@ -6,7 +6,7 @@ df$Conv_per <- (df$Conv_per)*100 #coverting to a percentage
 View(df)
 install.packages("writexl")
 library(writexl)
-write_xlsx(df, "~/Desktop/my_dataset.xlsx")
+write_xlsx(df, "~/Desktop/my_dataset.xlsx") #saving new excel to laptop
 p<-.7
 obs_count<-dim(df)[1]
 training_size <- floor(p * obs_count)
