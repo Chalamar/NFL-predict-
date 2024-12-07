@@ -3,7 +3,21 @@ View(df)
 df$Conv_per <-(df$`3DConv`/df$`3DAtt`)    #creating 3rd down conversion rate
 View(df)
 df$Conv_per <- (df$Conv_per)*100 #coverting to a percentage 
+#some exploratory analysis
+df <- NFl_big_data_cleaned
+head(df)
+summary(df)
+dim(df)
 View(df)
+LPM_0 <- lm(Win~., data=df)
+summary(LPM_0$fitted.values)
+summary(LPM_0)
+# Create dummy variables for specific teams
+df$OppPittsburghSteelers <- ifelse(df$Opp == "Pittsburgh Steelers", 1, 0)
+df$OppKansasCityChiefs <- ifelse(df$Opp == "Kansas City Chiefs", 1, 0)
+df$TeamPittsburghSteelers <- ifelse(df$Team == "Pittsburgh Steelers", 1, 0)
+df$TeamKansasCityChiefs <- ifelse(df$Team == "Kansas City Chiefs", 1, 0)
+
 install.packages("writexl")
 library(writexl)
 write_xlsx(df, "~/Desktop/my_dataset.xlsx") #saving new excel to laptop
@@ -21,20 +35,11 @@ Testing <- df[-train_ind, ] #PULLS RANDOM ROWS FOR TESTING
 dim(Training)
 dim(Testing)
 
-M1 <- lm(Win ~ OT + Home + PF + PA +`1stDF` + RushYd + PassYd + TOA + `1stDA` + 
-           OppRush + OppPass + OppTO + comingoffbye + `3DConv` + `3DAtt`+ Conv_per, Training) #first model
+M1 <- lm(Win ~ OT + Home + PF + PA + `1stDF` + RushYd + PassYd + TOA + `1stDA` + 
+           OppRush + OppPass + OppTO + comingoffbye + OppPittsburghSteelers + TeamKansasCityChiefs +
+           `3DConv` + `3DAtt` + TeamPittsburghSteelers + OppKansasCityChiefs + Conv_per, 
+         data = Training)
 summary(M1) #SUMMARY DIAGNOSTIC OUTPUT
-
-
-variables <- Training[, c("Win","OT", "Home", "PF", "PA", "1stDF", "RushYd", "PassYd", 
-                          "TOA", "1stDA", "OppRush", "OppPass", "OppTO", 
-                          "comingoffbye", "3DConv", "3DAtt", "Conv_per")]
-
-# Compute the correlation matrix
-cor_matrix <- cor(variables, use = "complete.obs")
-
-# Print the correlation matrix
-print(cor_matrix)
 
 PRED_1_IN <- predict(M1, Training) #first model
 View(PRED_1_IN) #VIEW IN-SAMPLE PREDICTIONS
@@ -48,4 +53,14 @@ PRED_1_OUT <- predict(M1, Testing)
 (RMSE_1_OUT<-sqrt(sum((PRED_1_OUT-Testing$Win)^2)/length(PRED_1_OUT))) #computes out-of-sample 
 
 
+
+variables <- Training[, c("Win","OT", "Home", "PF", "PA", "1stDF", "RushYd", "PassYd", 
+                          "TOA", "1stDA", "OppRush", "OppPass", "OppTO", 
+                          "comingoffbye", "3DConv", "3DAtt", "Conv_per")]
+
+# Compute the correlation matrix
+cor_matrix <- cor(variables, use = "complete.obs")
+
+# Print the correlation matrix
+print(cor_matrix)
 
