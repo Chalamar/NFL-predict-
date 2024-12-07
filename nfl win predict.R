@@ -34,11 +34,13 @@ Testing <- df[-train_ind, ] #PULLS RANDOM ROWS FOR TESTING
 #CHECKING THE DIMENSIONS OF THE PARTITIONED DATA
 dim(Training)
 dim(Testing)
+M0 <- lm(Win ~  OppTO , Training) #first bivariate model
+
 
 M1 <- lm(Win ~ OT + Home + PF + PA + `1stDF` + RushYd + PassYd + TOA + `1stDA` + 
            OppRush + OppPass + OppTO + comingoffbye + OppPittsburghSteelers + TeamKansasCityChiefs +
            `3DConv` + `3DAtt` + TeamPittsburghSteelers + OppKansasCityChiefs + Conv_per, 
-         data = Training)
+         data = Training) #first multivariate regression
 summary(M1) #SUMMARY DIAGNOSTIC OUTPUT
 
 PRED_1_IN <- predict(M1, Training) #first model
