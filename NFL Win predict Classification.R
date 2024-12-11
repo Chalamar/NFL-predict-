@@ -23,20 +23,30 @@ df$TeamKansasCityChiefs <- ifelse(df$Team == "Kansas City Chiefs", 1, 0)
 install.packages("writexl")
 library(writexl)
 write_xlsx(df, "~/Desktop/my_dataset.xlsx")
-p<-.7
-obs_count<-dim(df)[1]
+#starting Partion 
+p <- 0.7
+obs_count <- dim(df)[1]
 training_size <- floor(p * obs_count)
-training_size
-set.seed(3721) #setting random seed
+remaining_size <- obs_count - training_size
+validation_size <- floor(remaining_size / 2)  # Split remaining 30% equally
+
+set.seed(3721) # Setting random seed
 train_ind <- sample(obs_count, size = training_size)
+remaining_ind <- setdiff(seq_len(obs_count), train_ind)
 
-Training <- df[train_ind, ] #PULLS RANDOM ROWS FOR TRAINING
-Testing <- df[-train_ind, ] #PULLS RANDOM ROWS FOR TESTING
+validation_ind <- sample(remaining_ind, size = validation_size)
+test_ind <- setdiff(remaining_ind, validation_ind)
 
-#CHECKING THE DIMENSIONS OF THE PARTITIONED DATA
+# Partition the dataset
+Training <- df[train_ind, ]
+Validation <- df[validation_ind, ]
+Testing <- df[test_ind, ]
+#checking partition
 dim(Training)
 dim(Testing)
-names(Training)
+dim(Validation)
+obs_count
+
 M0 <- lm(Win ~  OppTO , Training) #first bivariate model
 
 M1 <- lm(Win ~ OT + Home + PF + PA + `1stDF` + RushYd + PassYd + TOA + `1stDA` + 
