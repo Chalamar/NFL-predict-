@@ -23,6 +23,7 @@ df$TeamKansasCityChiefs <- ifelse(df$Team == "Kansas City Chiefs", 1, 0)
 install.packages("writexl")
 library(writexl)
 write_xlsx(df, "~/Desktop/my_dataset.xlsx")
+
 #starting Partion 
 p <- 0.7
 obs_count <- dim(df)[1]
@@ -47,93 +48,9 @@ dim(Testing)
 dim(Validation)
 obs_count
 
-M0 <- lm(Win ~  OppTO , Training) #first bivariate model
-
-M1 <- lm(Win ~ OT + Home + PF + PA + `1stDF` + RushYd + PassYd + TOA + `1stDA` + 
-           OppRush + OppPass + OppTO + comingoffbye + OppPittsburghSteelers + TeamKansasCityChiefs +
-           `3DConv` + `3DAtt` + TeamPittsburghSteelers + OppKansasCityChiefs + Conv_per, 
-         data = Training) # first multivariate model
-summary(M1) #SUMMARY DIAGNOSTIC OUTPUT
-
-variables1 <- Training[, c("Win","OT", "Home", "PF", "PA", "1stDF", "RushYd", "PassYd", 
-                          "TOA", "1stDA", "OppRush", "OppPass", "OppTO", "comingoffbye", 
-                          "3DConv", "3DAtt", "Conv_per", "TeamKansasCityChiefs", 
-                          "OppKansasCityChiefs","TeamPittsburghSteelers", "OppPittsburghSteelers" )]
-
-# Compute the correlation matrix
-cor_matrix <- cor(variables1, use = "complete.obs")
-
-# Print the correlation matrix
-print(cor_matrix)
-
-PRED_1_IN <- predict(M1, Training) #first model
-View(PRED_1_IN) #VIEW IN-SAMPLE PREDICTIONS
-View(M1$fitted.values) #FITTED VALUES ARE IN-SAMPLE PREDICTIONS
-
-#GENERATING PREDICTIONS ON THE TEST DATA TO BENCHMARK OUT-OF-SAMPLE PERFORMANCE 
-PRED_1_OUT <- predict(M1, Testing) 
-
-#COMPUTING / REPORTING IN-SAMPLE AND OUT-OF-SAMPLE ROOT MEAN SQUARED ERROR
-(RMSE_1_IN<-sqrt(sum((PRED_1_IN-Training$Win)^2)/length(PRED_1_IN))) #computes in-sample error
-(RMSE_1_OUT<-sqrt(sum((PRED_1_OUT-Testing$Win)^2)/length(PRED_1_OUT))) #computes out-of-sample 
-
-
-
-M3 <- lm(Win ~ OT + Home + PF + PA + `1stDF` + RushYd + PassYd + TOA + `1stDA` + 
-           OppRush + OppPass + OppTO + comingoffbye + TeamKansasCityChiefs +
-           `3DConv` + `3DAtt` + TeamPittsburghSteelers + OppKansasCityChiefs + Conv_per, 
-         data = Training)
-summary(M3) #SUMMARY DIAGNOSTIC OUTPUT
-PRED_3_IN <- predict(M3, Training) #first model
-View(PRED_3_IN) #VIEW IN-SAMPLE PREDICTIONS
-View(M3$fitted.values) #FITTED VALUES ARE IN-SAMPLE PREDICTIONS
-
-#GENERATING PREDICTIONS ON THE TEST DATA TO BENCHMARK OUT-OF-SAMPLE PERFORMANCE 
-PRED_3_OUT <- predict(M3, Testing) 
-
-#COMPUTING / REPORTING IN-SAMPLE AND OUT-OF-SAMPLE ROOT MEAN SQUARED ERROR
-(RMSE_3_IN<-sqrt(sum((PRED_3_IN-Training$Win)^2)/length(PRED_3_IN))) #computes in-sample error
-(RMSE_3_OUT<-sqrt(sum((PRED_3_OUT-Testing$Win)^2)/length(PRED_3_OUT))) #computes out-of-sample 
-
-variables1 <- Training[, c("Win","OT", "Home", "PF", "PA", "1stDF", "RushYd", "PassYd", 
-                          "TOA", "1stDA", "OppRush", "OppPass", "OppTO", "comingoffbye", 
-                          "3DConv", "3DAtt", "Conv_per", "TeamKansasCityChiefs", 
-                          "OppKansasCityChiefs","TeamPittsburghSteelers" )]
-
-# Compute the correlation matrix
-cor_matrix <- cor(variables1, use = "complete.obs")
-
-# Print the correlation matrix
-print(cor_matrix)
-
 ################
 # building Logit model
 ###############
-
-#Setting seed and partitioning data 
-p<-.7
-
-#number of observations (rows) in the dataframe
-obs_count<-dim(df)[1]
-
-#number of observations to be selected for the training partition
-#the floor() function rounds down to the nearest integer
-training_size <- floor(p * obs_count)
-training_size
-#set the seed to make your partition reproducible
-set.seed(3721)
-#create a vector with the shuffled row numbers of the original dataset
-train_ind <- sample(obs_count, size = training_size)
-
-Training <- df[train_ind, ] #pulls random rows for training
-Testing <- df[-train_ind, ] #pulls random rows for testing
-
-dim(Training)
-dim(Testing)
-#CHECKING THE DIMENSIONS OF THE PARTITIONED DATA
-dim(Training)
-dim(Testing)
-names(Training)
 
 #logit model1
 M_LOG<-glm(Win ~ OT + Home + PF + PA + `1stDF` + RushYd + PassYd + TOA + `1stDA` + 
@@ -148,7 +65,8 @@ variables <- Training[, c("Win","OT", "Home", "PF", "PA", "1stDF", "RushYd", "Pa
                           "TOA", "1stDA", "OppRush", "OppPass", "OppTO", "comingoffbye", 
                           "3DConv", "3DAtt", "Conv_per", "TeamKansasCityChiefs", 
                           "OppKansasCityChiefs","TeamPittsburghSteelers" )]
-
+str(variables)
+variables$Win <- as.numeric(variables$Win)
 # Compute the correlation matrix
 cor_matrix <- cor(variables, use = "complete.obs")
 
@@ -166,18 +84,16 @@ variables <- Training[, c("Win","OT", "Home", "PF", "PA", "RushYd", "PassYd",
                           "TOA", "OppRush", "OppPass", "OppTO", "comingoffbye", 
                          "3DAtt", "Conv_per", "TeamKansasCityChiefs", 
                           "OppKansasCityChiefs","TeamPittsburghSteelers" )]
-
+variables$Win <- as.numeric(variables$Win)
 # Compute the correlation matrix
 cor_matrix <- cor(variables, use = "complete.obs")
 
 # Print the correlation matrix
 print(cor_matrix)
 
-# running 2 logit regression to see which produces Lower AIC and residual deviance 
-M_LOG3<-glm(Win ~ OT + Home + PF + RushYd + PassYd + TOA + 
-              OppRush + OppPass + OppTO + comingoffbye + OppPittsburghSteelers + TeamKansasCityChiefs +
-              `3DAtt` + TeamPittsburghSteelers + OppKansasCityChiefs + Conv_per, 
-            data = Training, family = binomial(link="logit"))
+M_LOG3 <- glm(formula = Win ~ OT + PA + RushYd + PassYd + TOA + OppTO + 
+                `3DAtt` + OppKansasCityChiefs + Conv_per, family = binomial(link = "logit"), 
+              data = Training)
 summary(M_LOG3)
 vif(M_LOG3)
 
@@ -189,7 +105,7 @@ summary(M_LOG4)
 vif(M_LOG4)
 
 # ROC curve and AUC analysis
-predictions <- predict(M_LOG4, Testing, type = "response")
+predictions <- predict(M_LOG3, Testing, type = "response")
 roc_obj <- roc(Testing$Win, predictions)
 auc(roc_obj)
 
@@ -200,7 +116,7 @@ install.packages("caret")  # Install caret if not already installed
 library(caret)             # Load the caret package
 
 ########################################
-# we will proceed with model 4 but test both against the ROC Curve and AUC
+# we will proceed with model 3 but test both against the ROC Curve and AUC
 ########################################
 
 #takes the coefficients to the base e for odds-ratio interpretation
@@ -229,9 +145,9 @@ confusionMatrix(table(predict(M_LOG4, Testing, type="response") >= 0.5,
 ################
 library(tidymodels) #FOR YARDSTICK PACKAGE
 roc_obj <- roc(Testing$Win, predict(M_LOG4, Testing, type="response"))
-auc(roc_obj)
+LOGAUC <-auc(roc_obj)
 #NOTE THIS PLOTS SENSITIVITY (TRUE POSITIVES) VS. SPECIFICITY (TRUE NEGATIVES)
-plot(roc_obj, col = 'blue', main = "ROC Curve")
+LOGROC <- plot(roc_obj, col = 'blue', main = "ROC Curve")
 
 #########
 #Probit model
@@ -266,11 +182,11 @@ confusionMatrix(table(predict(M_PROB, Testing, type="response") >= 0.5,
 
 # ROC curve and AUC analysis
 predictions <- predict(M_PROB, Testing, type = "response")
-roc_obj <- roc(Testing$Win, predictions)
-auc(roc_obj)
+roc_obj2 <- roc(Testing$Win, predictions)
+PROBAUC <-auc(roc_obj2)
 
 # Plot ROC curve
-plot(roc_obj, col = 'blue', main = "ROC Curve")
+PROBROC <-plot(roc_obj2, col = 'blue', main = "ROC Curve")
 
 
 
@@ -284,16 +200,24 @@ library(rsample) #FOR initial_split() STRATIFIED RANDOM SAMPLING
 library(e1071) #SVM LIBRARY
 df$Win<-as.factor(df$Win) #FOR tune.svm()
 
-#CREATING A BALANCED FOLD BY STRATIFYING ON THE OUTCOME
+# Setting seed for reproducibility
 set.seed(3721)
-split<-initial_split(df, .7, strata=Win) #CREATE THE SPLIT
-training<-training(split) #TRAINING PARTITION
-test<-testing(split) #test PARTITION
 
+# Split the data into training (70%) and remaining (30%) using stratification on the outcome variable
+split <- initial_split(df, prop = 0.7, strata = Win)  
+training <- training(split)  # Training dataset (70% of the original)
+remaining <- testing(split)  # Remaining dataset (30% of the original)
+
+# Further split the remaining data (30%) into test and validation sets (50/50 split)
+validation_split <- initial_split(remaining, prop = 0.5, strata = Win)  # 50% of the remaining 30%
+test <- testing(validation_split)  # Testing dataset (15% of the original)
+validation <- training(validation_split)  # Validation dataset (15% of the original)
+
+table(df$Win)
 #VERIFY STRATIFIED SAMPLING YIELDS EQUALLY SKEWED PARTITIONS
-mean(training$Win==1)
-mean(test$Win==1)
-
+mean(training$Win == 1)  # Proportion of 'Win' == 1 in training set
+mean(validation$Win == 1)  # Proportion of 'Win' == 1 in validation set
+mean(test$Win == 1)  # Proportion of 'Win' == 1 in test set
 
 # Support Vector Machine (SVM) model
 df$Win <- as.factor(df$Win)  # Convert Win to factor for classification
@@ -302,7 +226,7 @@ split <- initial_split(df, prop = 0.7, strata = Win)
 training <- training(split)
 testing <- testing(split)
 
-SVM_Model <- svm(Win ~ OT + Home + PA + RushYd + PassYd + TOA + OppRush + OppPass + 
+SVM_Model1 <- svm(Win ~ OT + Home + PA + RushYd + PassYd + TOA + OppRush + OppPass + 
                    OppTO + comingoffbye + OppPittsburghSteelers + TeamKansasCityChiefs + 
                    `3DAtt` + TeamPittsburghSteelers + OppKansasCityChiefs + Conv_per,
                  data = training, type = "C-classification", kernel = "radial", 
@@ -312,20 +236,21 @@ SVM_Model <- svm(Win ~ OT + Home + PA + RushYd + PassYd + TOA + OppRush + OppPas
 print(SVM_Model)
 
 #REPORT IN AND OUT-OF-SAMPLE ERRORS (1-ACCURACY)
-(E_IN_PRETUNE<-1-mean(predict(SVM_Model, training)==training$Win))  # 1 - accuracy = error
-(E_OUT_PRETUNE<-1-mean(predict(SVM_Model, test)==test$Win))
+(E_IN_PRETUNE<-1-mean(predict(SVM_Model1, training)==training$Win))  # 1 - accuracy = error
+(E_OUT_PRETUNE<-1-mean(predict(SVM_Model1, test)==test$Win))
 
-SVM_Model2 <- svm(Win ~ .,
+SVM_Model <- svm(Win ~ .,
                 data = training, type = "C-classification", kernel = "radial", 
                 cost = 10, gamma = 1 / (ncol(training) - 1), coef0 = 2, degree = 2, scale = FALSE)
 
 print(SVM_Model2) #DIAGNOSTIC SUMMARY
 
 #REPORT IN AND OUT-OF-SAMPLE ERRORS (1-ACCURACY)
-(E_IN_PRETUNE<-1-mean(predict(SVM_Model2, training)==training$Win))  # 1 - accuracy = error
-(E_OUT_PRETUNE<-1-mean(predict(SVM_Model2, test)==test$Win))
+(E_IN_PRETUNE<-1-mean(predict(SVM_Model, training)==training$Win))  # 1 - accuracy = error
+(E_OUT_PRETUNE<-1-mean(predict(SVM_Model, test)==test$Win))
 
 ##########
+#Tuning SVM
 ##########
 
 
@@ -398,8 +323,13 @@ TUNE_TABLE <- matrix(c(E_IN_PRETUNE,
 colnames(TUNE_TABLE) <- c('UNTUNED', 'TUNED')
 rownames(TUNE_TABLE) <- c('E_IN', 'E_OUT')
 TUNE_TABLE #REPORT OUT-OF-SAMPLE ERRORS FOR BOTH HYPOTHESIS
+SVM_Table <- TUNE_TABLE
 
+
+##########
 #starting classification Tree
+##########
+
 
 #LOADING THE LIBRARIES
 library(tidymodels) #INCLUDES parsnip PACKAGE FOR decision_tree()
@@ -407,11 +337,6 @@ library(caret) #FOR confusionMatrix()
 library(rpart.plot)
 
 df$Win <- as.factor(df$Win)
-##PARTITIONING THE DATA##
-set.seed(3721)
-split<-initial_split(df, prop=.7, strata=Win)
-train<-training(split)
-test<-testing(split)
 
 #SPECIFYING THE CLASSIFICATION TREE MODEL
 class_spec <- decision_tree(min_n = 20 , #minimum number of observations for split
@@ -428,8 +353,9 @@ class_tree_fit <- fit(class_spec, formula = class_fmla, data = train)
 # PRINT THE FITTED MODEL
 print(class_tree_fit)
 #VISUALIZING THE CLASSIFICATION TREE MODEL:
-class_tree_fit$fit %>%
-  rpart.plot(type = 4, extra = 2, roundint = FALSE)
+class_tree_fit$fit <- rpart(Win ~ ., data = train, method = "class", 
+                            control = rpart.control(minsplit = 20, 
+                                                    maxdepth = 30, cp = 0.01), model = TRUE)
 #plotting
 plotcp(class_tree_fit$fit)
 
@@ -451,19 +377,18 @@ pred_prob <- predict(class_tree_fit, new_data = test, type="prob") %>%
 confusion <- table(pred_class$.pred_class, pred_class$Win)
 confusionMatrix(confusion, positive='1') #FROM CARET PACKAGE
 
-library(ggplot2)
-library(yardstick)
 #GENERATE ROC CURVE AND COMPUTE AUC OVER ALL TRUE / FALSE +'s
 library(pROC)
-roc_obj <- roc(test$Win, pred_prob$.pred_1)
+roc_obj4 <- roc(test$Win, pred_prob$.pred_1)
 
 # Plot the ROC curve
-plot(roc_obj, col='blue', main="ROC Curve")
+plot(roc_obj4, col='blue', main="ROC Curve")
 
 # Compute the AUC 
-auc_value <- auc(roc_obj)
-print(auc_value)
-plot(roc_obj, col='blue', main="ROC Curve")
+CARTAUC <- auc(roc_obj4)
+
+print(CARTAUC)
+CARTROC <-plot(roc_obj, col='blue', main="ROC Curve")
 
 ###########
 #XGboosted forest 
@@ -476,11 +401,6 @@ library(xgboost) #FOR GRADIENT BOOSTING
 library(caret) #FOR confusionMatrix()
 library(vip) #FOR VARIABLE IMPORTANCE
 df$Win<-as.factor(df$Win) #CONVERT OUTPUT TO FACTOR
-##PARTITIONING THE DATA##
-set.seed(3721)
-split<-initial_split(df, prop=.7, strata=Win)
-train<-training(split)
-test<-testing(split)
 
 #MODEL DESCRIPTION:
 fmla <- Win ~.
@@ -581,5 +501,16 @@ pred_class_out <- predict(final_model, new_data = test, type="class") %>%
 #GENERATE OUT-OF-SAMPLE CONFUSION MATRIX AND DIAGNOSTICS
 confusion <- table(pred_class_out$.pred_class, pred_class_out$Win)
 confusionMatrix(confusion) #FROM CARET PACKAGE
+XGBOOSTEOut <- confusionMatrix(confusion)
+#SUMMARIZE RESULTS IN A TABLE:
+TUNE_TABLE <- matrix(c(E_IN_PRETUNE, 
+                       E_IN_RETUNE,
+                       E_OUT_PRETUNE,
+                       E_OUT_RETUNE),
+                     ncol=2, 
+                     byrow=TRUE)
 
+colnames(TUNE_TABLE) <- c('UNTUNED', 'TUNED')
+rownames(TUNE_TABLE) <- c('E_IN', 'E_OUT')
+TUNE_TABLE #REPORT OUT-OF-SAMPLE ERRORS FOR BOTH HYPOTHESIS
 
